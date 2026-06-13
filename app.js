@@ -606,7 +606,152 @@ const slidesData = {
 // ==========================================
 let currentCourse = "obsidian"; // "obsidian" or "git"
 let currentSlideIndex = 0;
-let currentView = "portal"; // "portal", "slide", "textbook"
+let currentView = "portal"; // "portal", "slide", "textbook", "slide-practical", "textbook-practical"
+
+// ==========================================
+// 新增輔助功能 (Helpers for Practical View)
+// ==========================================
+function formatMarkdown(text) {
+  if (!text) return "";
+  let formatted = text;
+  formatted = formatted.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  formatted = formatted.replace(/`(.*?)`/g, "<code class='mono'>$1</code>");
+  formatted = formatted.replace(/\[(.*?)\]\((.*?)\)/g, "<a href='$2' target='_blank'>$1</a>");
+  return formatted;
+}
+
+function renderPracticalTextbook() {
+  const container = document.getElementById("practical-textbook-content");
+  const data = practicalData[currentCourse];
+  
+  const titleHeader = document.getElementById("practical-textbook-title");
+  titleHeader.textContent = currentCourse === "obsidian" ? "Obsidian 實作步驟指南" : "Git & GitHub 實作步驟指南";
+  
+  let html = "";
+  
+  data.forEach(page => {
+    let pageHtml = `<article class="textbook-unit" id="prac-page-${page.page}">`;
+    pageHtml += `<h3>第 ${page.page} 頁：${formatMarkdown(page.title)}</h3>`;
+    
+    let inList = false;
+    let listHtml = "";
+    
+    let inCode = false;
+    let codeLines = [];
+    
+    page.bullets.forEach(b => {
+      const trimmed = b.trim();
+      
+      const isCodeLine = b.startsWith("    `") && b.endsWith("`");
+      
+      if (isCodeLine) {
+        if (inList) {
+          pageHtml += `<ul>${listHtml}</ul>`;
+          inList = false;
+          listHtml = "";
+        }
+        if (!inCode) {
+          inCode = true;
+          codeLines = [];
+        }
+        const codeContent = b.substring(5, b.length - 1);
+        codeLines.push(codeContent);
+        return;
+      } else {
+        if (inCode) {
+          pageHtml += `<pre><code>${codeLines.join("\n")}</code></pre>`;
+          inCode = false;
+          codeLines = [];
+        }
+      }
+      
+      if (trimmed.startsWith("## ")) {
+        if (inList) {
+          pageHtml += `<ul>${listHtml}</ul>`;
+          inList = false;
+          listHtml = "";
+        }
+        const headerText = trimmed.substring(3);
+        pageHtml += `<h4>${formatMarkdown(headerText)}</h4>`;
+      }
+      else if (trimmed.startsWith("💡") || trimmed.startsWith("⚠️") || trimmed.startsWith(">")) {
+        if (inList) {
+          pageHtml += `<ul>${listHtml}</ul>`;
+          inList = false;
+          listHtml = "";
+        }
+        let cleanTip = trimmed;
+        if (trimmed.startsWith(">")) {
+          cleanTip = trimmed.substring(1).trim();
+        }
+        let typeClass = "tip-box";
+        if (trimmed.startsWith("⚠️")) typeClass = "warning-box";
+        pageHtml += `<blockquote class="textbook-blockquote ${typeClass}">${formatMarkdown(cleanTip)}</blockquote>`;
+      }
+      else if (trimmed.startsWith("- ") || trimmed.startsWith("* ") || b.startsWith("  - ") || b.startsWith("    - ")) {
+        if (!inList) {
+          inList = true;
+          listHtml = "";
+        }
+        let levelClass = "";
+        let liText = trimmed;
+        if (b.startsWith("    - ")) {
+          levelClass = "class='level-2'";
+          liText = b.substring(6);
+        } else if (b.startsWith("  - ") || b.startsWith(" - ")) {
+          levelClass = "class='level-1'";
+          liText = b.startsWith("  - ") ? b.substring(4) : b.substring(3);
+        } else if (trimmed.startsWith("- ")) {
+          liText = trimmed.substring(2);
+        }
+        listHtml += `<li ${levelClass}>${formatMarkdown(liText)}</li>`;
+      }
+      else {
+        if (inList) {
+          pageHtml += `<ul>${listHtml}</ul>`;
+          inList = false;
+          listHtml = "";
+        }
+        pageHtml += `<p>${formatMarkdown(b)}</p>`;
+      }
+    });
+    
+    if (inList) {
+      pageHtml += `<ul>${listHtml}</ul>`;
+    }
+    if (inCode) {
+      pageHtml += `<pre><code>${codeLines.join("\n")}</code></pre>`;
+    }
+    
+    if (page.image) {
+      const imgPath = page.image.startsWith("screenshots/") ? page.image : `images/${page.image}`;
+      pageHtml += `<img src="${imgPath}" alt="${page.title}" class="textbook-img">`;
+    }
+    
+    pageHtml += `</article>`;
+    html += pageHtml;
+  });
+  
+  container.innerHTML = html;
+}
+
+window.downloadFile = (type) => {
+  if (type === 'theo') {
+    if (currentCourse === 'obsidian') {
+      window.location.href = 'Obsidian_教學簡報.pptx';
+    } else {
+      window.location.href = 'GitHub_教學簡報.pptx';
+    }
+  } else if (type === 'prac') {
+    if (currentCourse === 'obsidian') {
+      window.location.href = 'Obsidian-實作簡報.pptx';
+    } else {
+      window.location.href = 'GitHub-實作簡報.pptx';
+    }
+  } else if (type === 'md') {
+    window.location.href = '實作教材-GitHub與Obsidian.md';
+  }
+};
 
 // ==========================================
 // 3. 初始化載入 (Initialization)
@@ -637,7 +782,7 @@ function setupEventListeners() {
   
   // 鍵盤左右方向鍵切換簡報
   document.addEventListener("keydown", (e) => {
-    if (currentView === "slide") {
+    if (currentView === "slide" || currentView === "slide-practical") {
       if (e.key === "ArrowLeft") prevSlide();
       if (e.key === "ArrowRight" || e.key === "Space") {
         e.preventDefault();
@@ -730,6 +875,7 @@ function showView(view) {
   document.getElementById("slide-view").style.display = "none";
   document.getElementById("textbook-view-obsidian").style.display = "none";
   document.getElementById("textbook-view-git").style.display = "none";
+  document.getElementById("textbook-practical-view").style.display = "none";
 
   // 取消選單 active
   document.querySelectorAll(".menu-item").forEach(item => item.classList.remove("active"));
@@ -738,26 +884,38 @@ function showView(view) {
   if (view === "portal") {
     document.getElementById("portal-view").style.display = "block";
     document.getElementById("logo-text").textContent = "數位自主學習教材";
+    document.getElementById("header-nav").style.display = "none";
   } else {
     document.getElementById("dashboard-view").style.display = "grid";
+    document.getElementById("header-nav").style.display = "flex";
     
     // 設定 Sidebar Menu 與頂部 Nav 狀態
     const menuSlide = document.getElementById("menu-slide");
     const menuBook = document.getElementById("menu-book");
+    const menuSlidePrac = document.getElementById("menu-slide-prac");
+    const menuBookPrac = document.getElementById("menu-book-prac");
     const navSlide = document.getElementById("nav-slide");
     const navBook = document.getElementById("nav-book");
 
-    if (view === "slide") {
+    if (view === "slide" || view === "slide-practical") {
       document.getElementById("slide-view").style.display = "block";
-      menuSlide.classList.add("active");
-      navSlide.classList.add("active");
+      if (view === "slide") {
+        if (menuSlide) menuSlide.classList.add("active");
+        if (navSlide) navSlide.classList.add("active");
+      } else {
+        if (menuSlidePrac) menuSlidePrac.classList.add("active");
+      }
       currentSlideIndex = 0;
       renderSlide();
     } else if (view === "textbook") {
       const tbId = currentCourse === "obsidian" ? "textbook-view-obsidian" : "textbook-view-git";
       document.getElementById(tbId).style.display = "block";
-      menuBook.classList.add("active");
-      navBook.classList.add("active");
+      if (menuBook) menuBook.classList.add("active");
+      if (navBook) navBook.classList.add("active");
+    } else if (view === "textbook-practical") {
+      document.getElementById("textbook-practical-view").style.display = "block";
+      if (menuBookPrac) menuBookPrac.classList.add("active");
+      renderPracticalTextbook();
     }
   }
   
@@ -773,7 +931,7 @@ function showView(view) {
 // 6. 簡報播放邏輯 (Slide Presentation Logic)
 // ==========================================
 function renderSlide() {
-  const slides = slidesData[currentCourse];
+  const slides = currentView === "slide-practical" ? practicalData[currentCourse] : slidesData[currentCourse];
   const slide = slides[currentSlideIndex];
   
   const titleEl = document.getElementById("slide-title");
@@ -787,26 +945,29 @@ function renderSlide() {
   imgArea.innerHTML = "";
   contentArea.className = "slide-content-area"; // 重設 class
 
-  if (slide.type === "cover") {
+  const slideType = slide.type || (slide.image ? "content" : "text");
+
+  if (slideType === "cover") {
     contentArea.classList.add("full-text");
-    titleEl.innerHTML = slide.title;
-    bulletsEl.innerHTML = `<li style="list-style:none; text-align:center; font-size:1.5rem; color:var(--accent-color); margin-top:20px;">${slide.subtitle}</li>`;
+    titleEl.innerHTML = formatMarkdown(slide.title);
+    bulletsEl.innerHTML = `<li style="list-style:none; text-align:center; font-size:1.5rem; color:var(--accent-color); margin-top:20px;">${formatMarkdown(slide.subtitle)}</li>`;
     
     // 將封面大圖放到右側
     contentArea.className = "slide-content-area";
     const img = document.createElement("img");
-    img.src = `images/${slide.image}`;
+    const imgPath = slide.image.startsWith("screenshots/") ? slide.image : `images/${slide.image}`;
+    img.src = imgPath;
     img.alt = slide.title;
     imgArea.appendChild(img);
   } 
-  else if (slide.type === "divider") {
+  else if (slideType === "divider") {
     contentArea.classList.add("divider-slide");
-    titleEl.innerHTML = slide.title;
+    titleEl.innerHTML = formatMarkdown(slide.title);
     bulletsEl.innerHTML = `<li style="list-style:none; text-align:center; font-size:1.5rem; color:rgba(255,255,255,0.8); margin-top:10px;">—— 精選教學單元 ——</li>`;
   }
-  else if (slide.type === "comparison") {
+  else if (slideType === "comparison") {
     contentArea.classList.add("full-text");
-    titleEl.innerHTML = slide.title;
+    titleEl.innerHTML = formatMarkdown(slide.title);
     
     const container = document.createElement("div");
     container.className = "slide-comparison-columns";
@@ -814,11 +975,11 @@ function renderSlide() {
     // 欄位 1
     const col1 = document.createElement("div");
     col1.className = "comparison-column";
-    col1.innerHTML = `<h4>${slide.col1_title}</h4>`;
+    col1.innerHTML = `<h4>${formatMarkdown(slide.col1_title)}</h4>`;
     const ul1 = document.createElement("ul");
     slide.col1_bullets.forEach(b => {
       const li = document.createElement("li");
-      li.textContent = b;
+      li.innerHTML = formatMarkdown(b);
       ul1.appendChild(li);
     });
     col1.appendChild(ul1);
@@ -826,11 +987,11 @@ function renderSlide() {
     // 欄位 2
     const col2 = document.createElement("div");
     col2.className = "comparison-column";
-    col2.innerHTML = `<h4>${slide.col2_title}</h4>`;
+    col2.innerHTML = `<h4>${formatMarkdown(slide.col2_title)}</h4>`;
     const ul2 = document.createElement("ul");
     slide.col2_bullets.forEach(b => {
       const li = document.createElement("li");
-      li.textContent = b;
+      li.innerHTML = formatMarkdown(b);
       ul2.appendChild(li);
     });
     col2.appendChild(ul2);
@@ -839,42 +1000,43 @@ function renderSlide() {
     container.appendChild(col2);
     bulletsEl.appendChild(container);
   }
-  else if (slide.type === "content") {
-    titleEl.innerHTML = slide.title;
+  else if (slideType === "content") {
+    titleEl.innerHTML = formatMarkdown(slide.title);
     slide.bullets.forEach(b => {
       const li = document.createElement("li");
       
       if (b.startsWith("    - ")) {
-        li.textContent = b.substring(6);
+        li.innerHTML = formatMarkdown(b.substring(6));
         li.className = "level-2";
-      } else if (b.startsWith("  - ") || b.startswith(" - ")) {
-        li.textContent = b.startsWith("  - ") ? b.substring(4) : b.substring(3);
+      } else if (b.startsWith("  - ") || b.startsWith(" - ")) {
+        li.innerHTML = formatMarkdown(b.startsWith("  - ") ? b.substring(4) : b.substring(3));
         li.className = "level-1";
       } else {
-        li.textContent = b;
+        li.innerHTML = formatMarkdown(b);
       }
       bulletsEl.appendChild(li);
     });
     
     const img = document.createElement("img");
-    img.src = `images/${slide.image}`;
+    const imgPath = slide.image.startsWith("screenshots/") ? slide.image : `images/${slide.image}`;
+    img.src = imgPath;
     img.alt = slide.title;
     imgArea.appendChild(img);
   }
-  else if (slide.type === "text") {
+  else if (slideType === "text") {
     contentArea.classList.add("full-text");
-    titleEl.innerHTML = slide.title;
+    titleEl.innerHTML = formatMarkdown(slide.title);
     
     slide.bullets.forEach(b => {
       const li = document.createElement("li");
       if (b.startsWith("    - ")) {
-        li.textContent = b.substring(6);
+        li.innerHTML = formatMarkdown(b.substring(6));
         li.className = "level-2";
       } else if (b.startsWith("  - ") || b.startsWith(" - ")) {
-        li.textContent = b.startsWith("  - ") ? b.substring(4) : b.substring(3);
+        li.innerHTML = formatMarkdown(b.startsWith("  - ") ? b.substring(4) : b.substring(3));
         li.className = "level-1";
       } else {
-        li.textContent = b;
+        li.innerHTML = formatMarkdown(b);
       }
       bulletsEl.appendChild(li);
     });
@@ -894,7 +1056,7 @@ function prevSlide() {
 }
 
 function nextSlide() {
-  const slides = slidesData[currentCourse];
+  const slides = currentView === "slide-practical" ? practicalData[currentCourse] : slidesData[currentCourse];
   if (currentSlideIndex < slides.length - 1) {
     currentSlideIndex++;
     renderSlide();

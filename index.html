@@ -59,17 +59,24 @@
     
     <!-- 側邊欄導覽 (Sidebar) -->
     <aside class="sidebar">
-      <div class="sidebar-title">課程導覽</div>
+      <div class="sidebar-title">理論觀念課</div>
       <ul class="menu-list">
-        <li class="menu-item" id="menu-slide" onclick="changeNavView('slide')">🎥 簡報教學模式</li>
+        <li class="menu-item" id="menu-slide" onclick="changeNavView('slide')">🎥 觀念簡報教學</li>
         <li class="menu-item" id="menu-book" onclick="changeNavView('textbook')">📖 詳細研讀課本</li>
-        <li class="menu-item" onclick="triggerPrint()">🖨️ 一鍵列印 PDF</li>
       </ul>
       
-      <div class="sidebar-title" style="margin-top: 2rem;">簡報下載</div>
+      <div class="sidebar-title" style="margin-top: 1.5rem;">手把手實作課</div>
       <ul class="menu-list">
-        <li class="menu-item" onclick="window.location.href='Obsidian_教學簡報.pptx'">📊 下載 Obsidian PPT</li>
-        <li class="menu-item" onclick="window.location.href='GitHub_教學簡報.pptx'">📊 下載 GitHub PPT</li>
+        <li class="menu-item" id="menu-slide-prac" onclick="changeNavView('slide-practical')">🛠️ 實作簡報播放</li>
+        <li class="menu-item" id="menu-book-prac" onclick="changeNavView('textbook-practical')">📝 實作教材研讀</li>
+      </ul>
+      
+      <div class="sidebar-title" style="margin-top: 1.5rem;">教材下載</div>
+      <ul class="menu-list">
+        <li class="menu-item" id="dl-slide-theo" onclick="downloadFile('theo')">📊 下載理論課 PPT</li>
+        <li class="menu-item" id="dl-slide-prac" onclick="downloadFile('prac')">📊 下載實作課 PPT</li>
+        <li class="menu-item" onclick="downloadFile('md')">📝 下載 Markdown 講義</li>
+        <li class="menu-item" onclick="triggerPrint()">🖨️ 列印/儲存 PDF</li>
       </ul>
     </aside>
 
@@ -348,12 +355,28 @@ git pull                                             # 拉取遠端最新變更<
         </article>
       </section>
 
+      <!-- ========================================== -->
+      <!-- 3D. 實作步驟研讀課本模式 (Practical Textbook) -->
+      <!-- ========================================== -->
+      <section id="textbook-practical-view" class="textbook-area" style="display: none;">
+        <div class="textbook-header">
+          <h2 id="practical-textbook-title">實作步驟研讀課本</h2>
+          <div class="textbook-btn-group">
+            <button class="ctrl-btn" onclick="triggerPrint()">🖨️ 列印/儲存為 PDF 教材</button>
+          </div>
+        </div>
+        <div id="practical-textbook-content">
+          <!-- Dynamically populated by app.js -->
+        </div>
+      </section>
+
     </main>
   </div>
 
   <!-- Toast 訊息提示 -->
   <div class="toast" id="toast">已複製到剪貼簿！</div>
 
+  <script src="practical_data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
