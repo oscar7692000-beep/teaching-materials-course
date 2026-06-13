@@ -1,0 +1,129 @@
+/* teaching_materials/print.css */
+@media print {
+  /* 1. 基礎重設：黑白列印與背景色設定 */
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-family: "Microsoft JhengHei", sans-serif !important;
+    font-size: 12pt !important;
+    line-height: 1.5 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* 2. 隱藏所有網頁介面元素 (側邊欄、按鈕、導航、簡報控制項) */
+  header,
+  .sidebar,
+  .textbook-header,
+  .textbook-btn-group,
+  .slide-frame,
+  .slide-controls,
+  .toast,
+  .copy-btn,
+  .quiz-option:hover,
+  .portal-container {
+    display: none !important;
+  }
+
+  /* 3. 調整主內容區域排版 */
+  .dashboard-container {
+    display: block !important;
+  }
+
+  .main-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .textbook-area {
+    display: block !important;
+  }
+
+  /* 4. 強制每個大單元分頁 */
+  .textbook-unit {
+    page-break-before: always !important;
+    margin-bottom: 0 !important;
+    padding-top: 1cm !important;
+  }
+
+  .textbook-unit:first-of-type {
+    page-break-before: avoid !important; /* 第一頁不需空白分頁 */
+  }
+
+  /* 5. 確保標題與圖片不會被攔腰切斷 */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid !important;
+    color: #000000 !important;
+    margin-top: 1.5em !important;
+    margin-bottom: 0.5em !important;
+  }
+
+  .textbook-unit h3 {
+    border-left: 5px solid #000000 !important;
+    padding-left: 0.5em !important;
+    font-size: 18pt !important;
+  }
+
+  img, 
+  pre, 
+  blockquote, 
+  .textbook-quiz {
+    page-break-inside: avoid !important;
+  }
+
+  /* 6. 調整程式碼區塊樣式以利列印 */
+  pre {
+    background-color: #f5f5f5 !important;
+    border: 1px solid #cccccc !important;
+    color: #000000 !important;
+    padding: 10px !important;
+    border-radius: 4px !important;
+  }
+
+  code {
+    font-family: "Courier New", Courier, monospace !important;
+    font-size: 10pt !important;
+  }
+
+  /* 7. 調整小測驗紙本呈現（隱藏按鈕邊框，直接呈現題目供作答） */
+  .textbook-quiz {
+    border: 1px solid #999999 !important;
+    border-left: 5px solid #000000 !important;
+    background-color: #fafafa !important;
+    padding: 15px !important;
+    margin: 20px 0 !important;
+    border-radius: 4px !important;
+  }
+
+  .quiz-option {
+    background-color: #ffffff !important;
+    border: 1px solid #cccccc !important;
+    color: #000000 !important;
+    padding: 6px 12px !important;
+    margin-top: 5px !important;
+    border-radius: 4px !important;
+  }
+
+  /* 8. 調整圖片大小符合列印 A4 */
+  .textbook-img {
+    max-width: 80% !important;
+    height: auto !important;
+    display: block !important;
+    margin: 20px auto !important;
+    border: 1px solid #cccccc !important;
+  }
+
+  /* 9. 顯示網頁超連結網址，方便紙本閱讀者輸入 */
+  a[href]::after {
+    content: " (" attr(href) ")" !important;
+    font-size: 90% !important;
+    color: #555555 !important;
+  }
+
+  /* 排除內部 anchors (如 #unit1) */
+  a[href^="#"]::after {
+    content: "" !important;
+  }
+}
